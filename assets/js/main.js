@@ -17,6 +17,7 @@ pages.forEach((page, i) => {
   page.prog = 0;   // 0 = rata, 1 = sudah terbalik
   page.dy = 0;     // geseran vertikal jari
   page.corner = 1; // 1 = sudut bawah, 0 = sudut atas
+  page.setAttribute("aria-label", `${i + 1} dari ${pages.length}`);
 
   const dot = document.createElement("button");
   dot.setAttribute("aria-label", `Halaman ${i + 1}`);
@@ -157,6 +158,11 @@ function render(opts = {}) {
     page.inert = i !== current;
   });
   [...dots.children].forEach((d, i) => d.setAttribute("aria-current", i === current));
+  panelLinks.forEach((btn) => {
+    const active = btn.dataset.goto === pages[current].id;
+    btn.closest(".panel").classList.toggle("active", active);
+    btn.setAttribute("aria-current", active);
+  });
   prevBtn.disabled = current === 0;
   nextBtn.disabled = current === pages.length - 1;
 }
@@ -165,6 +171,12 @@ function goTo(i) {
   current = Math.max(0, Math.min(pages.length - 1, i));
   render();
 }
+
+// Panel di kanan membuka halamannya di buku
+const panelLinks = [...document.querySelectorAll("[data-goto]")];
+panelLinks.forEach((btn) =>
+  btn.addEventListener("click", () => goTo(pages.findIndex((p) => p.id === btn.dataset.goto)))
+);
 
 prevBtn.addEventListener("click", () => goTo(current - 1));
 nextBtn.addEventListener("click", () => goTo(current + 1));

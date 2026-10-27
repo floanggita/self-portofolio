@@ -83,6 +83,20 @@ a { color: inherit; text-decoration: none; }
 }
 .page-back { background-color: #8e2a5c; }
 
+/* Isi halaman tambahan */
+.page:not(#halo) h1 { font-size: clamp(2rem, 5vw, 4rem); margin-bottom: 1rem; }
+.facts { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin-top: 1.5rem; }
+.facts dt, .contact-list span { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--rose); }
+.facts dd { font-weight: 600; }
+.skill-list { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem 2rem; max-width: 36rem; }
+.skill-list li { border-left: 3px solid var(--rose); padding-left: .75rem; }
+.skill-list strong { display: block; font-size: clamp(1rem, 1.6vw, 1.2rem); }
+.skill-list span { color: var(--blush); font-size: .9rem; }
+.contact-list { list-style: none; display: grid; gap: 1rem; }
+.contact-list span { display: block; }
+.contact-list a { font-size: clamp(1.1rem, 2.2vw, 1.6rem); font-weight: 600; border-bottom: 2px solid var(--rose); transition: border-color .2s; }
+.contact-list a:hover { border-color: var(--blush); }
+
 .book-nav { bottom: var(--pad); display: flex; align-items: center; gap: 1rem; }
 .book-nav > button {
   width: 2.5rem; height: 2.5rem; border-radius: 50%;
@@ -97,7 +111,19 @@ a { color: inherit; text-decoration: none; }
 
 /* Kanan: tiga panel warna */
 .panels { display: grid; grid-template-rows: 1fr 1fr 1fr; }
-.panel { padding: var(--pad); display: flex; flex-direction: column; justify-content: center; gap: .75rem; }
+.panel { position: relative; padding: var(--pad); display: flex; flex-direction: column; justify-content: center; gap: .75rem; transition: box-shadow .3s, filter .2s; }
+/* Seluruh panel bisa diklik untuk membuka halamannya di buku */
+.panel-open { position: absolute; inset: 0; z-index: 1; width: 100%; background: none; border: 0; cursor: pointer; }
+.panel-open:focus-visible { outline: 3px solid var(--plum); outline-offset: -3px; }
+.panel:hover { filter: brightness(1.06); }
+.panel::after {
+  content: "→"; position: absolute; top: 1rem; right: 1.25rem;
+  font-weight: 600; opacity: .5; transition: opacity .2s, transform .2s;
+}
+.panel:hover::after { opacity: 1; transform: translateX(4px); }
+/* Panel yang halamannya sedang terbuka: tersambung ke panel intro dengan garis plum */
+.panel.active { box-shadow: inset 6px 0 0 var(--plum); }
+.panel.active::after { content: "←"; opacity: 1; transform: none; } /* menunjuk ke halaman yang sedang terbuka */
 .label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; opacity: .8; }
 
 .panel-profile { background: var(--mauve); color: var(--paper); flex-direction: row; align-items: center; justify-content: flex-start; gap: 1.25rem; }
@@ -114,7 +140,7 @@ a { color: inherit; text-decoration: none; }
 .skills li { background: var(--blush); padding: .35rem .85rem; border-radius: var(--radius); font-size: .9rem; }
 
 .panel-links { background: var(--blush); }
-.links { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
+.links { position: relative; z-index: 2; display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
 .links a { font-weight: 600; color: var(--plum); border-bottom: 2px solid var(--rose); transition: border-color .2s; }
 .links a:hover { border-color: var(--plum); }
 
@@ -137,9 +163,17 @@ a { color: inherit; text-decoration: none; }
   .panels { grid-template-rows: auto auto auto; }
   .panel { padding-block: .85rem; gap: .5rem; }
   .skills li { font-size: .8rem; padding: .3rem .7rem; }
+  .skill-list { gap: .5rem 1rem; }
+  .skill-list span { font-size: .78rem; }
+  .facts, .contact-list { gap: .6rem 1.5rem; }
+  .panel.active { box-shadow: inset 0 4px 0 var(--plum); }
+  .panel.active::after { content: "↑"; }
 }
 
 /* Layar sangat pendek: izinkan scroll daripada konten terpotong */
+@media (max-width: 760px) and (max-height: 700px) {
+  .skill-list span { display: none; }
+}
 @media (max-height: 600px), (max-width: 760px) and (max-height: 700px) {
   .slide { height: auto; min-height: 100dvh; overflow: visible; }
 }

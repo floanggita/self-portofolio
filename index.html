@@ -15,7 +15,7 @@
       <span class="logo">NK<span>.</span></span>
 
       <div class="book" aria-roledescription="carousel" aria-label="Perkenalan">
-        <article class="page" aria-roledescription="slide" aria-label="1 dari 3">
+        <article class="page" id="halo" aria-roledescription="slide">
           <div class="page-front">
             <p class="eyebrow">Halo, saya</p>
             <h1>Nama Kamu</h1>
@@ -26,21 +26,54 @@
           <div class="page-back" aria-hidden="true"></div>
         </article>
 
-        <article class="page" aria-roledescription="slide" aria-label="2 dari 3">
+        <article class="page" id="tentang" aria-roledescription="slide">
           <div class="page-front">
             <p class="eyebrow">Tentang saya</p>
             <h1>Cerita singkat</h1>
             <p class="lead">Ceritakan latar belakang, perjalananmu, dan apa yang membuatmu bersemangat dalam bekerja. Satu atau dua paragraf pendek sudah cukup.</p>
+            <dl class="facts">
+              <div><dt>Lokasi</dt><dd>Indonesia</dd></div>
+              <div><dt>Status</dt><dd>Terbuka untuk kerja sama</dd></div>
+            </dl>
           </div>
           <div class="page-back" aria-hidden="true"></div>
         </article>
 
-        <article class="page" aria-roledescription="slide" aria-label="3 dari 3">
+        <article class="page" id="keahlian" aria-roledescription="slide">
+          <div class="page-front">
+            <p class="eyebrow">Keahlian</p>
+            <h1>Yang saya kuasai</h1>
+            <ul class="skill-list">
+              <li><strong>JavaScript</strong><span>Web interaktif &amp; otomasi</span></li>
+              <li><strong>HTML &amp; CSS</strong><span>Tampilan responsif</span></li>
+              <li><strong>Java</strong><span>Backend &amp; test framework</span></li>
+              <li><strong>API Testing</strong><span>REST, otomasi pengujian</span></li>
+              <li><strong>Godot</strong><span>Game 2D/3D dengan GDScript</span></li>
+              <li><strong>Git</strong><span>Kolaborasi &amp; versioning</span></li>
+            </ul>
+          </div>
+          <div class="page-back" aria-hidden="true"></div>
+        </article>
+
+        <article class="page" id="proyek" aria-roledescription="slide">
           <div class="page-front">
             <p class="eyebrow">Sedang dikerjakan</p>
             <h1>Proyek unggulan</h1>
             <p class="lead">Tulis proyek yang paling ingin kamu tunjukkan: apa masalahnya, apa peranmu, dan hasilnya.</p>
             <a href="#" class="btn">Lihat Proyek →</a>
+          </div>
+          <div class="page-back" aria-hidden="true"></div>
+        </article>
+
+        <article class="page" id="kontak" aria-roledescription="slide">
+          <div class="page-front">
+            <p class="eyebrow">Temukan saya</p>
+            <h1>Mari ngobrol</h1>
+            <ul class="contact-list">
+              <li><span>Email</span><a href="mailto:email@contoh.com">email@contoh.com</a></li>
+              <li><span>GitHub</span><a href="#" target="_blank" rel="noopener">github.com/username</a></li>
+              <li><span>LinkedIn</span><a href="#" target="_blank" rel="noopener">linkedin.com/in/username</a></li>
+            </ul>
           </div>
           <div class="page-back" aria-hidden="true"></div>
         </article>
@@ -55,6 +88,7 @@
 
     <aside class="panels">
       <div class="panel panel-profile">
+        <button class="panel-open" data-goto="tentang" aria-label="Buka halaman Tentang saya"></button>
         <div class="avatar" aria-hidden="true">NK</div>
         <div>
           <p class="label">Lokasi</p>
@@ -64,6 +98,7 @@
       </div>
 
       <div class="panel panel-skills">
+        <button class="panel-open" data-goto="keahlian" aria-label="Buka halaman Keahlian"></button>
         <p class="label">Keahlian</p>
         <ul class="skills">
           <li>JavaScript</li><li>HTML &amp; CSS</li><li>Java</li><li>API Testing</li><li>Godot</li><li>Git</li>
@@ -71,6 +106,7 @@
       </div>
 
       <div class="panel panel-links">
+        <button class="panel-open" data-goto="kontak" aria-label="Buka halaman Kontak"></button>
         <p class="label">Temukan saya</p>
         <nav class="links">
           <a href="mailto:email@contoh.com">Email</a>
