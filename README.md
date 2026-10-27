@@ -1,4 +1,4 @@
-# Portofolio
+# Portofolio — Floridia Anggitasari
 
 Web portofolio satu layar (seperti slide presentasi), responsif untuk handphone. HTML + CSS saja.
 

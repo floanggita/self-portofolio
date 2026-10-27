@@ -111,6 +111,15 @@ a { color: inherit; text-decoration: none; }
 .skill-list li { border-left: 3px solid var(--line); padding-left: .75rem; }
 .skill-list strong { display: block; font-size: clamp(1rem, 1.6vw, 1.2rem); }
 .skill-list li > span { color: var(--soft); font-size: .9rem; }
+.timeline { list-style: none; display: grid; gap: .9rem; max-width: 36rem; }
+.timeline li { border-left: 3px solid var(--line); padding-left: .85rem; }
+.timeline strong { display: block; font-size: clamp(1rem, 1.6vw, 1.2rem); }
+.timeline li > span { color: var(--soft); font-size: .9rem; }
+.highlights { list-style: none; display: grid; gap: .45rem; max-width: 36rem; margin-top: 1.25rem; }
+.highlights li { position: relative; padding-left: 1.1rem; color: var(--soft); font-size: clamp(.9rem, 1.3vw, 1rem); }
+.highlights li::before { content: ""; position: absolute; left: 0; top: .6em; width: .45rem; height: .45rem; border-radius: 50%; background: var(--accent); }
+.highlights strong { color: var(--fg); }
+.stack { margin-top: 1rem; font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); }
 .contact-list { list-style: none; display: grid; gap: 1rem; }
 .contact-list li > span { display: block; }
 .contact-list a { font-size: clamp(1.1rem, 2.2vw, 1.6rem); font-weight: 600; border-bottom: 2px solid var(--line); transition: border-color .2s; }
@@ -161,6 +170,10 @@ a { color: inherit; text-decoration: none; }
 .slide.zoomed .skill-list { margin-inline: auto; }
 .slide.zoomed .skill-list li { border-left: 0; border-top: 3px solid var(--line); padding: .5rem 0 0; }
 .slide.zoomed .contact-list { justify-items: center; }
+.slide.zoomed .timeline, .slide.zoomed .highlights { margin-inline: auto; }
+.slide.zoomed .timeline li { border-left: 0; border-top: 3px solid var(--line); padding: .5rem 0 0; }
+.slide.zoomed .highlights li { padding-left: 0; }
+.slide.zoomed .highlights li::before { position: static; display: inline-block; margin-right: .5rem; vertical-align: .1em; }
 
 /* Efek mengetik: sisa teks disembunyikan tapi tetap memakan tempat, supaya tata letak tidak melompat */
 .tw-rest { visibility: hidden; }
@@ -229,7 +242,7 @@ a { color: inherit; text-decoration: none; }
   .slide, .slide.zoomed { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
   .panels { max-height: 60vh; transition: max-height .6s cubic-bezier(.4, 0, .2, 1), opacity .3s; }
   .slide.zoomed .panels { max-height: 0; }
-  .page-front { padding-block: 3.75rem 4.25rem; }
+  .page-front { padding-block: 3.75rem 4.5rem; }
   .book-nav > button { width: 2.25rem; height: 2.25rem; }
   .intro h2 { margin: .25rem 0 .5rem; }
   .btn { margin-top: 1rem; }
@@ -243,6 +256,12 @@ a { color: inherit; text-decoration: none; }
   .skills li { font-size: .8rem; padding: .3rem .7rem; }
   .skill-list { gap: .5rem 1rem; }
   .skill-list li > span { font-size: .78rem; }
+  .timeline { gap: .6rem; }
+  .timeline li > span, .highlights li { font-size: .8rem; }
+  .highlights { margin-top: .6rem; gap: .25rem; }
+  .page:not(#halo) h1 { margin-bottom: .5rem; }
+  .stack { margin-top: .6rem; font-size: .72rem; }
+  .page-front .lead { font-size: .92rem; }
   .facts, .contact-list { gap: .6rem 1.5rem; }
 }
 
