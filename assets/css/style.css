@@ -57,7 +57,8 @@ a { color: inherit; text-decoration: none; }
 .book {
   flex: 1;
   display: grid;
-  perspective: 1800px;
+  perspective: 2600px;
+  perspective-origin: 0% 50%;
   touch-action: pan-y;
   user-select: none;
   cursor: grab;
@@ -68,10 +69,11 @@ a { color: inherit; text-decoration: none; }
   position: relative;
   transform-origin: left center;
   transform-style: preserve-3d;
-  transform: rotateY(calc(var(--angle, 0) * 1deg));
-  transition: transform .7s cubic-bezier(.3, .7, .2, 1);
+  transform: rotateY(calc(var(--angle, 0) * 1deg)); /* diatur dari main.js */
+  will-change: transform;
 }
-.book.dragging .page { transition: none; }
+/* Halaman yang sudah dibalik disembunyikan, supaya sisi belakangnya tidak terlihat */
+.page.turned { visibility: hidden; }
 .page-front, .page-back {
   position: absolute; inset: 0;
   backface-visibility: hidden;
@@ -82,17 +84,14 @@ a { color: inherit; text-decoration: none; }
   position: relative; min-height: 100%;
   display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
 }
-/* Bayangan lipatan yang makin gelap saat halaman dibalik */
-.page-front::after {
+/* Cahaya & bayangan lipatan: muncul halus saat halaman terangkat */
+.page-front::after, .page-back::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(to left, rgba(0, 0, 0, .45), transparent 70%);
-  opacity: calc(var(--angle, 0) / -90);
+  opacity: var(--lift, 0);
 }
-.page-back {
-  transform: rotateY(180deg);
-  background: linear-gradient(to right, var(--mauve), #8f3d5e);
-  box-shadow: inset -20px 0 40px rgba(0, 0, 0, .25);
-}
+.page-front::after { background: linear-gradient(to left, rgba(0, 0, 0, .35), rgba(255, 255, 255, .06) 40%, transparent 75%); }
+.page-back { transform: rotateY(180deg); }
+.page-back::after { background: linear-gradient(to right, rgba(0, 0, 0, .3), transparent 60%); }
 
 .book-nav { display: flex; align-items: center; gap: 1rem; }
 .book-nav > button {
