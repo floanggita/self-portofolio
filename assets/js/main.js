@@ -301,33 +301,133 @@ function swapPanel(fromSection, toSection) {
 
 slots.forEach((slot) => fillSlot(slot, slot.dataset.section, false));
 
-// ---------- Zoom: bagian besar memenuhi layar, klik lagi (atau Esc) untuk kembali ----------
+// ---------- Zoom: semua slide jadi lembaran yang di-scroll ke bawah; klik lagi (atau Esc) untuk kembali ----------
 
 const slide = document.querySelector(".slide");
 const zoomBtn = document.querySelector(".zoom-toggle");
 const panelsEl = document.querySelector(".panels");
-
 const zoomed = () => slide.classList.contains("zoomed");
+let zoomBusy = false;
 
-function setZoom(on) {
-  if (on === zoomed()) return;
+// Animasi dengan batas waktu cadangan, supaya alur zoom tidak macet kalau animasi tidak berjalan
+function play(keyframes, ms) {
+  if (reduceMotion) return Promise.resolve();
+  const anim = book.animate(keyframes, { duration: ms, easing: "cubic-bezier(.2, .7, .2, 1)" });
+  return Promise.race([anim.finished, new Promise((r) => setTimeout(r, ms + 100))]).then(() => anim.cancel());
+}
+
+function enterSheets() {
   finishFlip();
   drag = null;
-  slide.classList.toggle("zoomed", on);
-  if (on) {
-    // Semua slide jadi lembaran; langsung scroll ke slide yang sedang dibuka
-    pages.forEach((p) => { p.classList.remove("hidden"); p.inert = false; });
-    book.scrollTop = current.offsetTop - 8;
-  } else {
-    pages.forEach((p) => p.classList.toggle("hidden", p !== current));
-    book.scrollTop = 0;
-    updateUI();
-  }
+  slide.classList.add("zoomed");
+  pages.forEach((p) => { p.classList.remove("hidden"); p.inert = false; });
+  book.scrollTop = current.offsetTop; // mulai dari slide yang sedang dibuka
+  startTyping();
+}
+
+function leaveSheets() {
+  stopTyping();
+  slide.classList.remove("zoomed");
+  pages.forEach((p) => p.classList.toggle("hidden", p !== current));
+  book.scrollTop = 0;
+  updateUI();
+}
+
+async function setZoom(on) {
+  if (on === zoomed() || zoomBusy) return;
+  zoomBusy = true;
   zoomBtn.setAttribute("aria-pressed", on);
   zoomBtn.setAttribute("aria-label", on ? "Kembali ke tampilan awal" : "Perbesar tampilan");
   panelsEl.inert = on;
+  try {
+    if (on) {
+      // Zoom in: lembaran membesar dari kecil ke penuh
+      enterSheets();
+      await play([{ transform: "scale(.6)", opacity: 0, borderRadius: "28px" }, { transform: "scale(1)", opacity: 1, borderRadius: "0" }], 650);
+    } else {
+      // Zoom out: lembaran mengecil & menghilang, lalu tampilan slide muncul kembali
+      await play([{ transform: "scale(1)", opacity: 1 }, { transform: "scale(.6)", opacity: 0, borderRadius: "28px" }], 380);
+      leaveSheets();
+      await play([{ transform: "scale(1.12)", opacity: 0 }, { transform: "scale(1)", opacity: 1 }], 480);
+    }
+  } finally {
+    zoomBusy = false; // jangan sampai tombol zoom macet
+  }
 }
 zoomBtn.addEventListener("click", () => setZoom(!zoomed()));
 document.addEventListener("keydown", (e) => e.key === "Escape" && setZoom(false));
+
+// ---------- Efek mengetik: teks tiap lembar muncul huruf demi huruf saat lembar itu terlihat ----------
+
+const TYPE_MS = 14;    // jeda per huruf untuk teks biasa
+const TITLE_MS = 45;   // jeda per huruf untuk judul besar
+const PAUSE_MS = 140;  // jeda antar paragraf
+let typedNodes = [];   // { wrap, node } untuk dikembalikan saat keluar zoom
+
+// Ganti tiap potongan teks dengan [sudah diketik][sisa tersembunyi]
+function prepareTyping(page) {
+  const walker = document.createTreeWalker(page.querySelector(".page-front"), NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (n.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
+  });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  return nodes.map((node) => {
+    const delay = node.parentElement.closest("h1") ? TITLE_MS : TYPE_MS; // baca sebelum node dilepas
+    const wrap = document.createElement("span");
+    const done = document.createElement("span");
+    const rest = document.createElement("span");
+    done.className = "tw-done";
+    rest.className = "tw-rest";
+    rest.textContent = node.textContent;
+    wrap.append(done, rest);
+    node.replaceWith(wrap);
+    typedNodes.push({ wrap, node });
+    return { done, rest, text: node.textContent, delay };
+  });
+}
+
+function typePage(page) {
+  let i = 0, c = 0;
+  const tick = () => {
+    const part = page.parts[i];
+    if (!part || !zoomed()) return;
+    part.done.classList.add("typing");
+    c++;
+    part.done.textContent = part.text.slice(0, c);
+    part.rest.textContent = part.text.slice(c);
+    if (c < part.text.length) return (page.typeTimer = setTimeout(tick, part.delay));
+    part.done.classList.remove("typing");
+    i++; c = 0;
+    page.typeTimer = setTimeout(tick, PAUSE_MS);
+  };
+  tick();
+}
+
+// Mulai mengetik lembar yang minimal 35% terlihat (dicek setiap kali di-scroll)
+function typeVisibleSheets() {
+  if (!zoomed() || reduceMotion) return;
+  const view = book.getBoundingClientRect();
+  pages.forEach((p) => {
+    const r = p.getBoundingClientRect();
+    const visible = Math.min(r.bottom, view.bottom) - Math.max(r.top, view.top);
+    if (!p.typed && visible > Math.min(r.height, view.height) * 0.35) {
+      p.typed = true;
+      typePage(p);
+    }
+  });
+}
+book.addEventListener("scroll", typeVisibleSheets, { passive: true });
+
+function startTyping() {
+  if (reduceMotion) return;
+  pages.forEach((p) => { p.parts = prepareTyping(p); p.typed = false; });
+  typeVisibleSheets();
+}
+
+function stopTyping() {
+  pages.forEach((p) => clearTimeout(p.typeTimer));
+  typedNodes.forEach(({ wrap, node }) => wrap.replaceWith(node)); // kembalikan teks asli
+  typedNodes = [];
+}
 
 updateUI();
