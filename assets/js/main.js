@@ -155,6 +155,21 @@ function show(section) {
 
 addEventListener("resize", () => flipping && draw(flipping.page));
 
+// ---------- Zoom: bagian besar memenuhi layar, klik lagi (atau Esc) untuk kembali ----------
+
+const slide = document.querySelector(".slide");
+const zoomBtn = document.querySelector(".zoom-toggle");
+const panelsEl = document.querySelector(".panels");
+
+function setZoom(on) {
+  slide.classList.toggle("zoomed", on);
+  zoomBtn.setAttribute("aria-pressed", on);
+  zoomBtn.setAttribute("aria-label", on ? "Kembali ke tampilan awal" : "Perbesar tampilan");
+  panelsEl.inert = on;
+}
+zoomBtn.addEventListener("click", () => setZoom(!slide.classList.contains("zoomed")));
+document.addEventListener("keydown", (e) => e.key === "Escape" && setZoom(false));
+
 // ---------- Panel kanan: bertukar tempat dengan halaman besar ----------
 
 function fillSlot(slot, section, animateIn) {
