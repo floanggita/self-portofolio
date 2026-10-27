@@ -1,36 +1,32 @@
-// Buku di bagian intro: geser (swipe/drag), tombol, titik, atau panah keyboard untuk membalik halaman.
-// Efek kertas: halaman dipotong di garis lipatan, bagian yang terlipat dipantulkan sebagai sisi belakang.
+// Bagian besar di kiri hanya berganti saat salah satu panel di kanan diklik.
+// Panel yang diklik bertukar tempat dengan bagian yang sedang tampil besar.
+// Efek kertas: halaman lama dipotong di garis lipatan, bagian yang terlipat dipantulkan sebagai sisi belakang,
+// sehingga halaman tujuan di bawahnya terbuka.
 const book = document.querySelector(".book");
 const pages = [...book.querySelectorAll(".page")];
-const dots = document.querySelector(".book-dots");
-const prevBtn = document.querySelector(".book-prev");
-const nextBtn = document.querySelector(".book-next");
-const FLIP_MS = 1200; // durasi satu balikan penuh
-const LIFT = 0.18;    // seberapa tinggi sudut kertas terangkat saat dibalik (relatif tinggi halaman)
+const intro = document.querySelector(".intro");
+const slots = [...document.querySelectorAll(".slot")];
+const FLIP_MS = 1200; // durasi satu lipatan
+const LIFT = 0.18;    // seberapa tinggi sudut kertas terangkat saat dilipat (relatif tinggi halaman)
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-let current = 0;
+let current = pages[0]; // halaman yang sedang tampil
+let flipping = null;    // { page, raf } halaman lama yang sedang dilipat
 
-pages.forEach((page, i) => {
+pages.forEach((page) => {
   const shadow = document.createElement("div");
   shadow.className = "page-shadow";
   page.prepend(shadow);
-  page.prog = 0;   // 0 = rata, 1 = sudah terbalik
-  page.dy = 0;     // geseran vertikal jari
-  page.corner = 1; // 1 = sudut bawah, 0 = sudut atas
-  page.setAttribute("aria-label", `${i + 1} dari ${pages.length}`);
-
-  const dot = document.createElement("button");
-  dot.setAttribute("aria-label", `Halaman ${i + 1}`);
-  dot.addEventListener("click", () => goTo(i));
-  dots.appendChild(dot);
+  page.prog = 0; // 0 = rata, 1 = terlipat habis
+  page.classList.toggle("hidden", page !== current);
+  page.inert = page !== current;
 });
 
 // ---------- Geometri lipatan ----------
 
 const dot2 = (a, b) => a.x * b.x + a.y * b.y;
-const hidden = "polygon(0 0, 0 0, 0 0)";
+const NONE = "polygon(0 0, 0 0, 0 0)";
 const toPolygon = (poly) =>
-  poly.length > 2 ? `polygon(${poly.map((p) => `${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`).join(", ")})` : hidden;
+  poly.length > 2 ? `polygon(${poly.map((p) => `${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`).join(", ")})` : NONE;
 
 // Potong poligon dengan garis lipatan, simpan sisi yang searah n (sign = 1) atau sebaliknya (sign = -1)
 function clip(poly, M, n, sign) {
@@ -70,18 +66,16 @@ function constrain(P, C, h) {
 function draw(page) {
   const [shadow, front, back] = [page.querySelector(".page-shadow"), page.querySelector(".page-front"), page.querySelector(".page-back")];
   const w = book.clientWidth, h = book.clientHeight, prog = page.prog;
-  page.classList.toggle("turned", prog >= 1);
 
   if (prog <= 0) {
     front.style.clipPath = "";
-    back.style.clipPath = shadow.style.clipPath = hidden;
+    back.style.clipPath = shadow.style.clipPath = NONE;
     return;
   }
 
-  // C = sudut kertas yang ditarik, P = posisinya sekarang (melengkung naik di tengah balikan)
-  const C = { x: w, y: page.corner * h };
-  const lift = Math.sin(prog * Math.PI) * LIFT * h * (page.corner ? -1 : 1);
-  const P = constrain({ x: w - 2 * w * prog, y: C.y + lift + page.dy }, C, h);
+  // C = sudut kanan bawah kertas, P = posisinya sekarang (melengkung naik di tengah lipatan)
+  const C = { x: w, y: h };
+  const P = constrain({ x: w - 2 * w * prog, y: h - Math.sin(prog * Math.PI) * LIFT * h }, C, h);
   const len = Math.hypot(C.x - P.x, C.y - P.y) || 1;
   const n = { x: (C.x - P.x) / len, y: (C.y - P.y) / len }; // normal lipatan, menunjuk ke arah sudut
   const M = { x: (C.x + P.x) / 2, y: (C.y + P.y) / 2 };     // titik di garis lipatan
@@ -106,7 +100,7 @@ function draw(page) {
     [depth, "rgba(0,0,0,.15)"],
   ]);
 
-  // Bayangan jatuh di halaman di bawahnya, paling tebal saat kertas tegak
+  // Bayangan jatuh di halaman tujuan di bawahnya, paling tebal saat kertas tegak
   shadow.style.clipPath = toPolygon(folded);
   shadow.style.backgroundImage = foldGradient(M, n, w, h, [
     [0, `rgba(0,0,0,${(0.15 + 0.4 * curve).toFixed(2)})`],
@@ -114,160 +108,75 @@ function draw(page) {
   ]);
 }
 
-// ---------- Animasi ----------
+// ---------- Ganti halaman ----------
 
+// Pelan di awal dan akhir, seperti lembar kertas yang diangkat lalu jatuh
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
-function animate(page, to, { delay = 0, fromDrag = false } = {}) {
-  cancelAnimationFrame(page.raf);
-  const from = page.prog, fromDy = page.dy;
-  const duration = reduceMotion ? 0 : Math.max(250, FLIP_MS * Math.abs(to - from));
-  const ease = fromDrag ? easeOut : easeInOut; // setelah dilepas jari: lanjut dengan momentum
-  if (!fromDrag) page.corner = 1;
-  page.animating = true;
-  let start = null;
+// Halaman lama dikembalikan rata lalu disembunyikan di bawah
+function finishFlip() {
+  if (!flipping) return;
+  cancelAnimationFrame(flipping.raf);
+  const old = flipping.page;
+  old.prog = 0;
+  draw(old);
+  old.classList.add("hidden");
+  flipping = null;
+  intro.dataset.section = current.dataset.section; // warna logo ikut setelah kertas selesai dilipat
+}
+
+function show(section) {
+  const target = pages.find((p) => p.dataset.section === section);
+  if (!target || target === current) return;
+  finishFlip(); // klik cepat: selesaikan lipatan sebelumnya dulu
+
+  const old = current;
+  current = target;
+  swapPanel(old.dataset.section, section);
+
+  // Halaman tujuan langsung di bawah halaman lama, lalu halaman lama dilipat
+  target.classList.remove("hidden");
+  target.style.zIndex = 1;
+  old.style.zIndex = 2;
+  pages.forEach((p) => (p.inert = p !== current));
+
+  flipping = { page: old };
+  if (reduceMotion) return finishFlip();
+  const start = performance.now();
   const step = (now) => {
-    start ??= now + delay;
-    const t = duration ? Math.min(Math.max(now - start, 0) / duration, 1) : 1;
-    page.prog = from + (to - from) * ease(t);
-    page.dy = fromDy * (1 - ease(t));
-    draw(page);
-    if (t < 1) page.raf = requestAnimationFrame(step);
-    else {
-      page.style.zIndex = restingZ(page);
-      page.animating = false;
-      updateChrome();
-    }
+    const t = Math.min((now - start) / FLIP_MS, 1);
+    old.prog = easeInOut(t);
+    draw(old);
+    if (t < 1) flipping.raf = requestAnimationFrame(step);
+    else finishFlip();
   };
-  page.raf = requestAnimationFrame(step);
+  flipping.raf = requestAnimationFrame(step);
 }
 
-// Halaman yang sudah dibalik di bawah; sisanya makin depan makin atas
-function restingZ(page) {
-  const i = pages.indexOf(page);
-  return i < current ? i : pages.length * 2 - i;
-}
-
-function render(opts = {}) {
-  const forward = pages.filter((p, i) => i < current && p.prog < 1);
-  const back = pages.filter((p, i) => i >= current && p.prog > 0);
-  pages.forEach((page, i) => {
-    const target = i < current ? 1 : 0;
-    if (page.prog !== target) {
-      // Beberapa halaman sekaligus (klik titik): dibalik bergantian seperti membuka buku cepat
-      const order = target ? forward.indexOf(page) : back.length - 1 - back.indexOf(page);
-      page.style.zIndex = pages.length * 4 - i; // halaman bergerak di atas; indeks kecil paling atas
-      animate(page, target, { ...opts, delay: opts.fromDrag ? 0 : order * 140 });
-    } else page.style.zIndex = restingZ(page);
-    page.inert = i !== current;
-  });
-  [...dots.children].forEach((d, i) => d.setAttribute("aria-current", i === current));
-  syncSections();
-  updateChrome();
-  prevBtn.disabled = current === 0;
-  nextBtn.disabled = current === pages.length - 1;
-}
-
-function goTo(i) {
-  current = Math.max(0, Math.min(pages.length - 1, i));
-  render();
-}
+addEventListener("resize", () => flipping && draw(flipping.page));
 
 // ---------- Panel kanan: bertukar tempat dengan halaman besar ----------
-// Klik panel -> halaman besar berganti ke bagian itu, dan bagian yang tadinya besar pindah ke slot panel tersebut.
-const intro = document.querySelector(".intro");
-const slots = [...document.querySelectorAll(".slot")];
-let shownSection = pages[0].dataset.section;
 
 function fillSlot(slot, section, animateIn) {
   const panel = document.getElementById(`panel-${section}`).content.firstElementChild.cloneNode(true);
   panel.dataset.section = section;
   slot.dataset.section = section;
-  panel.querySelector(".panel-open").addEventListener("click", () =>
-    goTo(pages.findIndex((p) => p.dataset.section === section))
-  );
+  panel.querySelector(".panel-open").addEventListener("click", () => show(section));
   if (animateIn && !reduceMotion) {
     // Panel baru menyapu masuk di atas panel lama, lalu panel lama dibuang
     const old = [...slot.children];
-    panel.classList.add("swap-in");
     const cleanup = () => old.forEach((o) => o.remove());
+    panel.classList.add("swap-in");
     panel.addEventListener("animationend", cleanup, { once: true });
     setTimeout(cleanup, 700); // cadangan kalau animationend tidak terpanggil (mis. tab di latar belakang)
   } else slot.replaceChildren();
   slot.append(panel);
 }
 
-function syncSections() {
-  const section = pages[current].dataset.section;
-  if (section === shownSection) return;
-  const slot = slots.find((s) => s.dataset.section === section);
-  if (slot) fillSlot(slot, shownSection, true);
-  shownSection = section;
-}
-
-// Warna logo & navigasi ikut bagian yang tampil, tapi baru setelah semua lembar selesai dibalik
-function updateChrome() {
-  if (!pages.some((p) => p.animating)) intro.dataset.section = pages[current].dataset.section;
+// Bagian yang tadinya tampil besar pindah ke slot panel yang diklik
+function swapPanel(fromSection, toSection) {
+  const slot = slots.find((s) => s.dataset.section === toSection);
+  if (slot) fillSlot(slot, fromSection, true);
 }
 
 slots.forEach((slot) => fillSlot(slot, slot.dataset.section, false));
-
-prevBtn.addEventListener("click", () => goTo(current - 1));
-nextBtn.addEventListener("click", () => goTo(current + 1));
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowRight") goTo(current + 1);
-  if (e.key === "ArrowLeft") goTo(current - 1);
-});
-addEventListener("resize", () => pages.forEach(draw));
-
-// ---------- Drag: sudut kertas mengikuti jari ----------
-
-let startX = null, startY = 0, dx = 0, dir = 0, startTime = 0, dragging = false, moving = null;
-
-book.addEventListener("pointerdown", (e) => {
-  if (e.button !== 0) return;
-  startX = e.clientX; startY = e.clientY; dx = 0; startTime = performance.now(); dragging = false;
-});
-
-book.addEventListener("pointermove", (e) => {
-  if (startX === null) return;
-  dx = e.clientX - startX;
-  if (!dragging) {
-    if (Math.abs(dx) < 8) return;
-    dir = Math.sign(dx); // -1 = ke halaman berikutnya, 1 = ke halaman sebelumnya
-    moving = dir < 0 ? pages[current + 1] && pages[current] : pages[current - 1];
-    if (!moving) return;
-    dragging = true;
-    book.classList.add("dragging");
-    book.setPointerCapture(e.pointerId);
-    cancelAnimationFrame(moving.raf);
-    moving.animating = false;
-    const r = book.getBoundingClientRect();
-    moving.corner = startY - r.top < r.height / 2 ? 0 : 1; // pegang dekat atas = sudut atas
-    moving.style.zIndex = pages.length * 3; // halaman yang sedang dibalik selalu di atas
-  }
-  const progress = Math.max(0, Math.min((dx * dir) / book.clientWidth, 1));
-  moving.prog = dir < 0 ? progress : 1 - progress;
-  moving.dy = e.clientY - startY;
-  draw(moving);
-});
-
-function endDrag() {
-  if (dragging) {
-    book.classList.remove("dragging");
-    const dist = dx * dir;
-    const fast = dist / (performance.now() - startTime) > 0.5;
-    if (dist > book.clientWidth * 0.25 || (dist > 40 && fast)) current -= dir;
-    render({ fromDrag: true }); // lanjutkan dari posisi jari sampai selesai (atau kembali)
-  }
-  startX = null; dragging = false; moving = null;
-}
-book.addEventListener("pointerup", endDrag);
-book.addEventListener("pointercancel", endDrag);
-
-// Jangan ikuti link kalau pengguna baru saja menggeser
-book.addEventListener("click", (e) => { if (Math.abs(dx) >= 8) e.preventDefault(); }, true);
-
-pages.forEach(draw);
-render();

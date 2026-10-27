@@ -43,9 +43,8 @@ a { color: inherit; text-decoration: none; }
   display: flex; flex-direction: column;
   overflow: hidden;
 }
-/* Logo dan navigasi melayang di atas buku; warnanya ikut bagian yang sedang tampil */
-.logo, .book-nav { position: absolute; left: var(--pad); z-index: 100; color: var(--fg); transition: color .6s; }
-.logo { top: var(--pad); font-weight: 800; font-size: 1.4rem; }
+/* Logo melayang di atas halaman; warnanya ikut bagian yang sedang tampil */
+.logo { position: absolute; top: var(--pad); left: var(--pad); z-index: 100; color: var(--fg); transition: color .6s; font-weight: 800; font-size: 1.4rem; }
 .logo span { color: var(--accent); transition: color .6s; }
 .eyebrow { color: var(--accent); font-weight: 600; font-size: clamp(.9rem, 1.5vw, 1.1rem); }
 .intro h1 { font-size: clamp(2.5rem, 7vw, 6rem); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; }
@@ -60,22 +59,14 @@ a { color: inherit; text-decoration: none; }
 }
 .btn:hover { transform: translateY(-2px); }
 
-/* Buku: halaman ditumpuk; lipatan kertas digambar dari main.js (clip-path + pantulan) */
-.book {
-  flex: 1;
-  position: relative;
-  display: grid;
-  touch-action: pan-y;
-  user-select: none;
-  cursor: grab;
-}
-.book.dragging { cursor: grabbing; }
+/* Halaman ditumpuk; lipatan kertas digambar dari main.js (clip-path + pantulan) */
+.book { flex: 1; position: relative; display: grid; }
 .page { grid-area: 1 / 1; position: relative; }
-/* Halaman yang sudah dibalik disembunyikan */
-.page.turned { visibility: hidden; }
+/* Hanya halaman yang tampil (dan halaman tujuan saat sedang dilipat) yang terlihat */
+.page.hidden { visibility: hidden; }
 .page-front {
   position: relative; min-height: 100%;
-  padding: calc(var(--pad) + 3.5rem) var(--pad) calc(var(--pad) + 4rem);
+  padding: calc(var(--pad) + 3.5rem) var(--pad);
   display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
   background: var(--bg);
   color: var(--fg);
@@ -102,18 +93,6 @@ a { color: inherit; text-decoration: none; }
 .contact-list span { display: block; }
 .contact-list a { font-size: clamp(1.1rem, 2.2vw, 1.6rem); font-weight: 600; border-bottom: 2px solid var(--line); transition: border-color .2s; }
 .contact-list a:hover { border-color: var(--fg); }
-
-.book-nav { bottom: var(--pad); display: flex; align-items: center; gap: 1rem; }
-.book-nav > button {
-  width: 2.5rem; height: 2.5rem; border-radius: 50%;
-  border: 2px solid var(--line); background: none; color: var(--fg);
-  font-size: 1rem; cursor: pointer; transition: background .2s, opacity .2s, color .6s, border-color .6s;
-}
-.book-nav > button:hover:not(:disabled) { background: rgba(255, 255, 255, .15); }
-.book-nav > button:disabled { opacity: .3; cursor: default; }
-.book-dots { display: flex; gap: .5rem; }
-.book-dots button { width: .6rem; height: .6rem; padding: 0; border: 0; border-radius: 999px; cursor: pointer; transition: width .3s, background .6s; background: var(--line); opacity: .45; }
-.book-dots button[aria-current="true"] { opacity: 1; width: 1.6rem; background: var(--fg); }
 
 /* Kanan: tiga slot berisi bagian yang sedang tidak tampil besar */
 .panels { display: grid; grid-template-rows: 1fr 1fr 1fr; }
@@ -171,8 +150,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 760px) {
   :root { --pad: 1.25rem; }
   .slide { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
-  .page-front { padding-block: 3.75rem 4.25rem; }
-  .book-nav > button { width: 2.25rem; height: 2.25rem; }
+  .page-front { padding-block: 3.75rem 1.75rem; }
   .intro h2 { margin: .25rem 0 .5rem; }
   .btn { margin-top: 1rem; }
   .panels { grid-template-rows: auto auto auto; }
