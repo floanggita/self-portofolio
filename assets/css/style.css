@@ -35,7 +35,8 @@ a { color: inherit; text-decoration: none; }
   background: var(--plum);
   color: var(--paper);
   padding: var(--pad);
-  display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem;
+  display: flex; flex-direction: column; gap: 1.5rem;
+  overflow: hidden;
 }
 .logo { font-weight: 800; font-size: 1.4rem; }
 .logo span { color: var(--rose); }
@@ -45,12 +46,65 @@ a { color: inherit; text-decoration: none; }
 .lead { max-width: 34rem; color: var(--blush); font-size: clamp(.95rem, 1.4vw, 1.1rem); }
 
 .btn {
-  align-self: flex-start;
+  display: inline-block; margin-top: 1.5rem;
   background: var(--blush); color: var(--plum);
   padding: .8rem 1.6rem; border-radius: var(--radius); font-weight: 600;
   transition: transform .2s;
 }
 .btn:hover { transform: translateY(-2px); }
+
+/* Buku: halaman ditumpuk, dibalik dengan poros di tepi kiri */
+.book {
+  flex: 1;
+  display: grid;
+  perspective: 1800px;
+  touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
+}
+.book.dragging { cursor: grabbing; }
+.page {
+  grid-area: 1 / 1;
+  position: relative;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transform: rotateY(calc(var(--angle, 0) * 1deg));
+  transition: transform .7s cubic-bezier(.3, .7, .2, 1);
+}
+.book.dragging .page { transition: none; }
+.page-front, .page-back {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: var(--plum);
+}
+.page-front {
+  position: relative; min-height: 100%;
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+}
+/* Bayangan lipatan yang makin gelap saat halaman dibalik */
+.page-front::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to left, rgba(0, 0, 0, .45), transparent 70%);
+  opacity: calc(var(--angle, 0) / -90);
+}
+.page-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(to right, var(--mauve), #8f3d5e);
+  box-shadow: inset -20px 0 40px rgba(0, 0, 0, .25);
+}
+
+.book-nav { display: flex; align-items: center; gap: 1rem; }
+.book-nav > button {
+  width: 2.5rem; height: 2.5rem; border-radius: 50%;
+  border: 2px solid var(--rose); background: none; color: var(--blush);
+  font-size: 1rem; cursor: pointer; transition: background .2s, opacity .2s;
+}
+.book-nav > button:hover:not(:disabled) { background: rgba(242, 218, 205, .15); }
+.book-nav > button:disabled { opacity: .3; cursor: default; }
+.book-dots { display: flex; gap: .5rem; }
+.book-dots button { width: .6rem; height: .6rem; padding: 0; border: 0; border-radius: 999px; cursor: pointer; transition: width .3s; background: var(--rose); opacity: .45; }
+.book-dots button[aria-current="true"] { opacity: 1; width: 1.6rem; border-radius: 999px; background: var(--blush); }
 
 /* Kanan: tiga panel warna */
 .panels { display: grid; grid-template-rows: 1fr 1fr 1fr; }
@@ -76,21 +130,23 @@ a { color: inherit; text-decoration: none; }
 .links a:hover { border-color: var(--plum); }
 
 /* Animasi masuk */
-.intro-body, .panel { animation: rise .7s ease both; }
+.book, .panel { animation: rise .7s ease both; }
 .panel:nth-child(1) { animation-delay: .1s; }
 .panel:nth-child(2) { animation-delay: .2s; }
 .panel:nth-child(3) { animation-delay: .3s; }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
-@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 /* Handphone: susun vertikal, tetap satu layar */
 @media (max-width: 760px) {
   :root { --pad: 1.25rem; }
   .slide { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
-  .intro { gap: 1rem; }
+  .intro { gap: .75rem; padding-block: 1rem; }
+  .book-nav > button { width: 2.25rem; height: 2.25rem; }
   .intro h2 { margin: .25rem 0 .5rem; }
+  .btn { margin-top: 1rem; }
   .panels { grid-template-rows: auto auto auto; }
-  .panel { padding-block: 1rem; gap: .5rem; }
+  .panel { padding-block: .85rem; gap: .5rem; }
   .skills li { font-size: .8rem; padding: .3rem .7rem; }
 }
 

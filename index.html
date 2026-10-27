@@ -13,13 +13,44 @@
   <main class="slide">
     <section class="intro">
       <span class="logo">NK<span>.</span></span>
-      <div class="intro-body">
-        <p class="eyebrow">Halo, saya</p>
-        <h1>Nama Kamu</h1>
-        <h2>Software Engineer &amp; Game Developer</h2>
-        <p class="lead">Saya membangun aplikasi, otomasi pengujian, dan game. Ganti teks ini dengan deskripsi singkat tentang dirimu.</p>
+
+      <div class="book" aria-roledescription="carousel" aria-label="Perkenalan">
+        <article class="page" aria-roledescription="slide" aria-label="1 dari 3">
+          <div class="page-front">
+            <p class="eyebrow">Halo, saya</p>
+            <h1>Nama Kamu</h1>
+            <h2>Software Engineer &amp; Game Developer</h2>
+            <p class="lead">Saya membangun aplikasi, otomasi pengujian, dan game. Ganti teks ini dengan deskripsi singkat tentang dirimu.</p>
+            <a href="mailto:email@contoh.com" class="btn">Hubungi Saya →</a>
+          </div>
+          <div class="page-back" aria-hidden="true"></div>
+        </article>
+
+        <article class="page" aria-roledescription="slide" aria-label="2 dari 3">
+          <div class="page-front">
+            <p class="eyebrow">Tentang saya</p>
+            <h1>Cerita singkat</h1>
+            <p class="lead">Ceritakan latar belakang, perjalananmu, dan apa yang membuatmu bersemangat dalam bekerja. Satu atau dua paragraf pendek sudah cukup.</p>
+          </div>
+          <div class="page-back" aria-hidden="true"></div>
+        </article>
+
+        <article class="page" aria-roledescription="slide" aria-label="3 dari 3">
+          <div class="page-front">
+            <p class="eyebrow">Sedang dikerjakan</p>
+            <h1>Proyek unggulan</h1>
+            <p class="lead">Tulis proyek yang paling ingin kamu tunjukkan: apa masalahnya, apa peranmu, dan hasilnya.</p>
+            <a href="#" class="btn">Lihat Proyek →</a>
+          </div>
+          <div class="page-back" aria-hidden="true"></div>
+        </article>
       </div>
-      <a href="mailto:email@contoh.com" class="btn">Hubungi Saya →</a>
+
+      <div class="book-nav">
+        <button class="book-prev" aria-label="Halaman sebelumnya">←</button>
+        <div class="book-dots"></div>
+        <button class="book-next" aria-label="Halaman berikutnya">→</button>
+      </div>
     </section>
 
     <aside class="panels">
@@ -49,5 +80,7 @@
       </div>
     </aside>
   </main>
+
+  <script src="assets/js/main.js"></script>
 </body>
 </html>
