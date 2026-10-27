@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portofolio | Nama Kamu</title>
+  <meta name="description" content="Portofolio pribadi — proyek, keahlian, dan kontak." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header class="nav">
+    <a href="#" class="logo">NK<span>.</span></a>
+    <button class="nav-toggle" aria-label="Buka menu">☰</button>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="#tentang">Tentang</a></li>
+        <li><a href="#keahlian">Keahlian</a></li>
+        <li><a href="#proyek">Proyek</a></li>
+        <li><a href="#kontak">Kontak</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Halo, saya</p>
+      <h1>Nama Kamu</h1>
+      <h2>Software Engineer &amp; Game Developer</h2>
+      <p class="lead">Saya membangun aplikasi, otomasi pengujian, dan game. Ganti teks ini dengan deskripsi singkat tentang dirimu.</p>
+      <div class="cta">
+        <a href="#proyek" class="btn btn-primary">Lihat Proyek</a>
+        <a href="#kontak" class="btn btn-outline">Hubungi Saya</a>
+      </div>
+    </section>
+
+    <section id="tentang" class="section">
+      <h3 class="section-title">Tentang Saya</h3>
+      <p>Ceritakan latar belakang, pengalaman, dan apa yang membuatmu bersemangat dalam bekerja.</p>
+    </section>
+
+    <section id="keahlian" class="section">
+      <h3 class="section-title">Keahlian</h3>
+      <ul class="skills">
+        <li>JavaScript</li><li>HTML &amp; CSS</li><li>Java</li><li>API Testing</li><li>Godot / GDScript</li><li>Git</li>
+      </ul>
+    </section>
+
+    <section id="proyek" class="section">
+      <h3 class="section-title">Proyek</h3>
+      <div class="projects">
+        <article class="card">
+          <h4>Proyek Satu</h4>
+          <p>Deskripsi singkat proyek, teknologi yang dipakai, dan hasilnya.</p>
+          <div class="tags"><span>Godot</span><span>GDScript</span></div>
+          <a href="#" class="card-link">Lihat →</a>
+        </article>
+        <article class="card">
+          <h4>Proyek Dua</h4>
+          <p>Deskripsi singkat proyek, teknologi yang dipakai, dan hasilnya.</p>
+          <div class="tags"><span>Java</span><span>Maven</span></div>
+          <a href="#" class="card-link">Lihat →</a>
+        </article>
+        <article class="card">
+          <h4>Proyek Tiga</h4>
+          <p>Deskripsi singkat proyek, teknologi yang dipakai, dan hasilnya.</p>
+          <div class="tags"><span>HTML</span><span>CSS</span><span>JS</span></div>
+          <a href="#" class="card-link">Lihat →</a>
+        </article>
+      </div>
+    </section>
+
+    <section id="kontak" class="section">
+      <h3 class="section-title">Kontak</h3>
+      <p>Tertarik bekerja sama? Kirim pesan kepada saya.</p>
+      <a href="mailto:email@contoh.com" class="btn btn-primary">email@contoh.com</a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> Nama Kamu. Dibuat dengan ❤️</p>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
