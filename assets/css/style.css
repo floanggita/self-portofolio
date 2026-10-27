@@ -27,29 +27,32 @@ body {
 }
 a { color: inherit; text-decoration: none; }
 
+/* Area berlatar merah: teks sekunder lebih gelap agar tetap kontras */
+.nav, .hero, #keahlian, #kontak { --muted: #4a2a2a; }
+
 /* Navigasi */
 .nav {
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; justify-content: space-between;
   padding: 1rem clamp(1rem, 5vw, 3rem);
-  background: rgba(255, 246, 169, 0.9);
+  background: rgba(222, 113, 113, 0.95);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
 .logo { font-weight: 800; font-size: 1.4rem; }
-.logo span { color: var(--accent); }
+.logo span { color: var(--cream); }
 .nav-links { display: flex; gap: 1.5rem; list-style: none; }
 .nav-links a { color: var(--muted); transition: color .2s; }
-.nav-links a:hover { color: var(--accent-text); }
+.nav-links a:hover { color: var(--cream); }
 .nav-toggle { display: none; background: none; border: 0; color: var(--text); font-size: 1.5rem; cursor: pointer; }
 
 /* Hero */
 .hero {
   min-height: 80vh; display: flex; flex-direction: column; justify-content: center;
   padding: 2rem var(--gutter);
-  background: linear-gradient(160deg, var(--peach) 0%, var(--cream) 100%);
+  background: linear-gradient(160deg, var(--coral) 0%, var(--peach) 100%);
 }
-.eyebrow { color: var(--accent-text); font-weight: 600; }
+.eyebrow { color: var(--text); font-weight: 600; }
 .hero h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); font-weight: 800; line-height: 1.1; }
 .hero h2 { font-size: clamp(1.2rem, 3vw, 1.8rem); color: var(--muted); font-weight: 600; margin: .5rem 0 1rem; }
 .lead { max-width: 600px; color: var(--muted); }
@@ -58,12 +61,13 @@ a { color: inherit; text-decoration: none; }
 /* Tombol */
 .btn { display: inline-block; padding: .75rem 1.5rem; border-radius: var(--radius); font-weight: 600; transition: transform .2s, background .2s; }
 .btn:hover { transform: translateY(-2px); }
-.btn-primary { background: var(--accent); color: var(--text); }
-.btn-outline { border: 2px solid var(--accent); color: var(--accent-text); }
+.btn-primary { background: var(--cream); color: var(--text); }
+.btn-outline { border: 2px solid var(--text); color: var(--text); }
 
 /* Section */
 .section { padding: 4rem var(--gutter); }
-#keahlian, #kontak { background: var(--mint); }
+#keahlian, #kontak { background: var(--coral); }
+#keahlian .section-title::after, #kontak .section-title::after { background: var(--cream); }
 .section-title { font-size: 1.8rem; margin-bottom: 1.5rem; }
 .section-title::after { content: ""; display: block; width: 48px; height: 3px; background: var(--accent); margin-top: .5rem; }
 .section > p { color: var(--muted); margin-bottom: 1.5rem; }
@@ -73,13 +77,13 @@ a { color: inherit; text-decoration: none; }
 
 .projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
 .card { background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; gap: .75rem; transition: transform .2s, border-color .2s; }
-.card:hover { transform: translateY(-4px); border-color: var(--accent); }
+.card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 6px 0 var(--mint); }
 .card p { color: var(--muted); flex: 1; }
 .tags { display: flex; gap: .5rem; flex-wrap: wrap; }
-.tags span { font-size: .8rem; color: var(--text); background: var(--mint); padding: .2rem .6rem; border-radius: 6px; }
+.tags span { font-size: .8rem; color: var(--text); background: var(--peach); padding: .2rem .6rem; border-radius: 6px; }
 .card-link { color: var(--accent-text); font-weight: 600; }
 
-.footer { text-align: center; padding: 2rem; color: var(--text); background: var(--coral); }
+.footer { text-align: center; padding: 2rem; color: var(--cream); background: var(--accent-text); }
 
 /* Animasi muncul saat scroll */
 .reveal { opacity: 0; transform: translateY(20px); transition: opacity .6s, transform .6s; }
@@ -88,7 +92,7 @@ a { color: inherit; text-decoration: none; }
 /* Responsif */
 @media (max-width: 700px) {
   .nav-toggle { display: block; }
-  .nav nav { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg); display: none; border-bottom: 1px solid var(--border); }
+  .nav nav { position: absolute; top: 100%; left: 0; right: 0; background: var(--coral); display: none; border-bottom: 1px solid var(--border); }
   .nav nav.open { display: block; }
   .nav-links { flex-direction: column; gap: 0; padding: 1rem; }
   .nav-links a { display: block; padding: .75rem 0; }
