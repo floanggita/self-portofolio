@@ -11,11 +11,11 @@
 </head>
 <body>
   <main class="slide">
-    <section class="intro">
+    <section class="intro" data-section="intro">
       <span class="logo">NK<span>.</span></span>
 
-      <div class="book" aria-roledescription="carousel" aria-label="Perkenalan">
-        <article class="page" id="halo" aria-roledescription="slide">
+      <div class="book" aria-roledescription="carousel" aria-label="Portofolio">
+        <article class="page" id="halo" data-section="intro" aria-roledescription="slide">
           <div class="page-front">
             <p class="eyebrow">Halo, saya</p>
             <h1>Nama Kamu</h1>
@@ -26,7 +26,17 @@
           <div class="page-back" aria-hidden="true"></div>
         </article>
 
-        <article class="page" id="tentang" aria-roledescription="slide">
+        <article class="page" id="proyek" data-section="intro" aria-roledescription="slide">
+          <div class="page-front">
+            <p class="eyebrow">Sedang dikerjakan</p>
+            <h1>Proyek unggulan</h1>
+            <p class="lead">Tulis proyek yang paling ingin kamu tunjukkan: apa masalahnya, apa peranmu, dan hasilnya.</p>
+            <a href="#" class="btn">Lihat Proyek →</a>
+          </div>
+          <div class="page-back" aria-hidden="true"></div>
+        </article>
+
+        <article class="page" id="tentang" data-section="tentang" aria-roledescription="slide">
           <div class="page-front">
             <p class="eyebrow">Tentang saya</p>
             <h1>Cerita singkat</h1>
@@ -39,7 +49,7 @@
           <div class="page-back" aria-hidden="true"></div>
         </article>
 
-        <article class="page" id="keahlian" aria-roledescription="slide">
+        <article class="page" id="keahlian" data-section="keahlian" aria-roledescription="slide">
           <div class="page-front">
             <p class="eyebrow">Keahlian</p>
             <h1>Yang saya kuasai</h1>
@@ -55,17 +65,7 @@
           <div class="page-back" aria-hidden="true"></div>
         </article>
 
-        <article class="page" id="proyek" aria-roledescription="slide">
-          <div class="page-front">
-            <p class="eyebrow">Sedang dikerjakan</p>
-            <h1>Proyek unggulan</h1>
-            <p class="lead">Tulis proyek yang paling ingin kamu tunjukkan: apa masalahnya, apa peranmu, dan hasilnya.</p>
-            <a href="#" class="btn">Lihat Proyek →</a>
-          </div>
-          <div class="page-back" aria-hidden="true"></div>
-        </article>
-
-        <article class="page" id="kontak" aria-roledescription="slide">
+        <article class="page" id="kontak" data-section="kontak" aria-roledescription="slide">
           <div class="page-front">
             <p class="eyebrow">Temukan saya</p>
             <h1>Mari ngobrol</h1>
@@ -86,36 +86,57 @@
       </div>
     </section>
 
+    <!-- Tiga slot berisi bagian yang sedang tidak tampil besar; isinya diambil dari template di bawah -->
     <aside class="panels">
-      <div class="panel panel-profile">
-        <button class="panel-open" data-goto="tentang" aria-label="Buka halaman Tentang saya"></button>
-        <div class="avatar" aria-hidden="true">NK</div>
-        <div>
-          <p class="label">Lokasi</p>
-          <p>Indonesia</p>
-          <p class="status"><span class="dot"></span>Terbuka untuk kerja sama</p>
-        </div>
-      </div>
-
-      <div class="panel panel-skills">
-        <button class="panel-open" data-goto="keahlian" aria-label="Buka halaman Keahlian"></button>
-        <p class="label">Keahlian</p>
-        <ul class="skills">
-          <li>JavaScript</li><li>HTML &amp; CSS</li><li>Java</li><li>API Testing</li><li>Godot</li><li>Git</li>
-        </ul>
-      </div>
-
-      <div class="panel panel-links">
-        <button class="panel-open" data-goto="kontak" aria-label="Buka halaman Kontak"></button>
-        <p class="label">Temukan saya</p>
-        <nav class="links">
-          <a href="mailto:email@contoh.com">Email</a>
-          <a href="#" target="_blank" rel="noopener">GitHub</a>
-          <a href="#" target="_blank" rel="noopener">LinkedIn</a>
-        </nav>
-      </div>
+      <div class="slot" data-section="tentang"></div>
+      <div class="slot" data-section="keahlian"></div>
+      <div class="slot" data-section="kontak"></div>
     </aside>
   </main>
+
+  <!-- Versi panel kecil untuk setiap bagian -->
+  <template id="panel-intro">
+    <div class="panel panel-intro">
+      <button class="panel-open" aria-label="Buka halaman Perkenalan"></button>
+      <p class="label">Perkenalan</p>
+      <p class="panel-title">Nama Kamu</p>
+      <p>Software Engineer &amp; Game Developer</p>
+    </div>
+  </template>
+
+  <template id="panel-tentang">
+    <div class="panel panel-tentang">
+      <button class="panel-open" aria-label="Buka halaman Tentang saya"></button>
+      <div class="avatar" aria-hidden="true">NK</div>
+      <div>
+        <p class="label">Lokasi</p>
+        <p>Indonesia</p>
+        <p class="status"><span class="dot"></span>Terbuka untuk kerja sama</p>
+      </div>
+    </div>
+  </template>
+
+  <template id="panel-keahlian">
+    <div class="panel panel-keahlian">
+      <button class="panel-open" aria-label="Buka halaman Keahlian"></button>
+      <p class="label">Keahlian</p>
+      <ul class="skills">
+        <li>JavaScript</li><li>HTML &amp; CSS</li><li>Java</li><li>API Testing</li><li>Godot</li><li>Git</li>
+      </ul>
+    </div>
+  </template>
+
+  <template id="panel-kontak">
+    <div class="panel panel-kontak">
+      <button class="panel-open" aria-label="Buka halaman Kontak"></button>
+      <p class="label">Temukan saya</p>
+      <nav class="links">
+        <a href="mailto:email@contoh.com">Email</a>
+        <a href="#" target="_blank" rel="noopener">GitHub</a>
+        <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+      </nav>
+    </div>
+  </template>
 
   <script src="assets/js/main.js"></script>
 </body>

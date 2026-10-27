@@ -125,6 +125,7 @@ function animate(page, to, { delay = 0, fromDrag = false } = {}) {
   const duration = reduceMotion ? 0 : Math.max(250, FLIP_MS * Math.abs(to - from));
   const ease = fromDrag ? easeOut : easeInOut; // setelah dilepas jari: lanjut dengan momentum
   if (!fromDrag) page.corner = 1;
+  page.animating = true;
   let start = null;
   const step = (now) => {
     start ??= now + delay;
@@ -133,7 +134,11 @@ function animate(page, to, { delay = 0, fromDrag = false } = {}) {
     page.dy = fromDy * (1 - ease(t));
     draw(page);
     if (t < 1) page.raf = requestAnimationFrame(step);
-    else page.style.zIndex = restingZ(page);
+    else {
+      page.style.zIndex = restingZ(page);
+      page.animating = false;
+      updateChrome();
+    }
   };
   page.raf = requestAnimationFrame(step);
 }
@@ -158,11 +163,8 @@ function render(opts = {}) {
     page.inert = i !== current;
   });
   [...dots.children].forEach((d, i) => d.setAttribute("aria-current", i === current));
-  panelLinks.forEach((btn) => {
-    const active = btn.dataset.goto === pages[current].id;
-    btn.closest(".panel").classList.toggle("active", active);
-    btn.setAttribute("aria-current", active);
-  });
+  syncSections();
+  updateChrome();
   prevBtn.disabled = current === 0;
   nextBtn.disabled = current === pages.length - 1;
 }
@@ -172,11 +174,44 @@ function goTo(i) {
   render();
 }
 
-// Panel di kanan membuka halamannya di buku
-const panelLinks = [...document.querySelectorAll("[data-goto]")];
-panelLinks.forEach((btn) =>
-  btn.addEventListener("click", () => goTo(pages.findIndex((p) => p.id === btn.dataset.goto)))
-);
+// ---------- Panel kanan: bertukar tempat dengan halaman besar ----------
+// Klik panel -> halaman besar berganti ke bagian itu, dan bagian yang tadinya besar pindah ke slot panel tersebut.
+const intro = document.querySelector(".intro");
+const slots = [...document.querySelectorAll(".slot")];
+let shownSection = pages[0].dataset.section;
+
+function fillSlot(slot, section, animateIn) {
+  const panel = document.getElementById(`panel-${section}`).content.firstElementChild.cloneNode(true);
+  panel.dataset.section = section;
+  slot.dataset.section = section;
+  panel.querySelector(".panel-open").addEventListener("click", () =>
+    goTo(pages.findIndex((p) => p.dataset.section === section))
+  );
+  if (animateIn && !reduceMotion) {
+    // Panel baru menyapu masuk di atas panel lama, lalu panel lama dibuang
+    const old = [...slot.children];
+    panel.classList.add("swap-in");
+    const cleanup = () => old.forEach((o) => o.remove());
+    panel.addEventListener("animationend", cleanup, { once: true });
+    setTimeout(cleanup, 700); // cadangan kalau animationend tidak terpanggil (mis. tab di latar belakang)
+  } else slot.replaceChildren();
+  slot.append(panel);
+}
+
+function syncSections() {
+  const section = pages[current].dataset.section;
+  if (section === shownSection) return;
+  const slot = slots.find((s) => s.dataset.section === section);
+  if (slot) fillSlot(slot, shownSection, true);
+  shownSection = section;
+}
+
+// Warna logo & navigasi ikut bagian yang tampil, tapi baru setelah semua lembar selesai dibalik
+function updateChrome() {
+  if (!pages.some((p) => p.animating)) intro.dataset.section = pages[current].dataset.section;
+}
+
+slots.forEach((slot) => fillSlot(slot, slot.dataset.section, false));
 
 prevBtn.addEventListener("click", () => goTo(current - 1));
 nextBtn.addEventListener("click", () => goTo(current + 1));
@@ -207,6 +242,7 @@ book.addEventListener("pointermove", (e) => {
     book.classList.add("dragging");
     book.setPointerCapture(e.pointerId);
     cancelAnimationFrame(moving.raf);
+    moving.animating = false;
     const r = book.getBoundingClientRect();
     moving.corner = startY - r.top < r.height / 2 ? 0 : 1; // pegang dekat atas = sudut atas
     moving.style.zIndex = pages.length * 3; // halaman yang sedang dibalik selalu di atas
