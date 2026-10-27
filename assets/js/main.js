@@ -181,6 +181,7 @@ function go(target) {
 }
 
 const stepBy = (delta) => {
+  if (zoomed()) return; // saat zoom, lembaran di-scroll biasa
   const list = sectionPages(shown().dataset.section);
   go(list[list.indexOf(shown()) + delta]);
 };
@@ -227,7 +228,7 @@ let drag = null; // { x, y, dx, t0, dir, moving, under, target }
 let lastDx = 0;  // jarak geser terakhir, untuk membedakan geser dari klik
 
 book.addEventListener("pointerdown", (e) => {
-  if (e.button !== 0 || !book.classList.contains("swipeable")) return;
+  if (e.button !== 0 || !book.classList.contains("swipeable") || zoomed()) return;
   drag = { x: e.clientX, y: e.clientY, dx: 0, t0: performance.now(), dir: 0 };
 });
 
@@ -306,13 +307,27 @@ const slide = document.querySelector(".slide");
 const zoomBtn = document.querySelector(".zoom-toggle");
 const panelsEl = document.querySelector(".panels");
 
+const zoomed = () => slide.classList.contains("zoomed");
+
 function setZoom(on) {
+  if (on === zoomed()) return;
+  finishFlip();
+  drag = null;
   slide.classList.toggle("zoomed", on);
+  if (on) {
+    // Semua slide jadi lembaran; langsung scroll ke slide yang sedang dibuka
+    pages.forEach((p) => { p.classList.remove("hidden"); p.inert = false; });
+    book.scrollTop = current.offsetTop - 8;
+  } else {
+    pages.forEach((p) => p.classList.toggle("hidden", p !== current));
+    book.scrollTop = 0;
+    updateUI();
+  }
   zoomBtn.setAttribute("aria-pressed", on);
   zoomBtn.setAttribute("aria-label", on ? "Kembali ke tampilan awal" : "Perbesar tampilan");
   panelsEl.inert = on;
 }
-zoomBtn.addEventListener("click", () => setZoom(!slide.classList.contains("zoomed")));
+zoomBtn.addEventListener("click", () => setZoom(!zoomed()));
 document.addEventListener("keydown", (e) => e.key === "Escape" && setZoom(false));
 
 updateUI();
