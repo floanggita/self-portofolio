@@ -1,25 +1,33 @@
-// Bagian besar di kiri hanya berganti saat salah satu panel di kanan diklik.
+// Bagian besar di kiri berisi slide. Slide di dalam satu bagian (mis. Intro) bisa digeser, lewat tombol,
+// titik, atau panah keyboard, tapi tidak nyambung ke bagian lain: bagian lain hanya terbuka saat panelnya diklik.
 // Panel yang diklik bertukar tempat dengan bagian yang sedang tampil besar.
-// Efek kertas: halaman lama dipotong di garis lipatan, bagian yang terlipat dipantulkan sebagai sisi belakang,
-// sehingga halaman tujuan di bawahnya terbuka.
+// Efek kertas: halaman dipotong di garis lipatan, bagian yang terlipat dipantulkan sebagai sisi belakang.
 const book = document.querySelector(".book");
 const pages = [...book.querySelectorAll(".page")];
 const intro = document.querySelector(".intro");
 const slots = [...document.querySelectorAll(".slot")];
-const FLIP_MS = 1200; // durasi satu lipatan
+const nav = document.querySelector(".book-nav");
+const dots = document.querySelector(".book-dots");
+const prevBtn = document.querySelector(".book-prev");
+const nextBtn = document.querySelector(".book-next");
+const FLIP_MS = 1200; // durasi satu lipatan penuh
 const LIFT = 0.18;    // seberapa tinggi sudut kertas terangkat saat dilipat (relatif tinggi halaman)
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-let current = pages[0]; // halaman yang sedang tampil
-let flipping = null;    // { page, raf } halaman lama yang sedang dilipat
+let current = pages[0]; // slide yang sedang tampil
+let flip = null;        // lipatan yang sedang berjalan: { moving, under, next, raf }
 
 pages.forEach((page) => {
   const shadow = document.createElement("div");
   shadow.className = "page-shadow";
   page.prepend(shadow);
-  page.prog = 0; // 0 = rata, 1 = terlipat habis
+  page.prog = 0;   // 0 = rata, 1 = terlipat habis
+  page.dy = 0;     // geseran vertikal jari
+  page.corner = 1; // 1 = sudut bawah, 0 = sudut atas
   page.classList.toggle("hidden", page !== current);
-  page.inert = page !== current;
 });
+
+const sectionPages = (section) => pages.filter((p) => p.dataset.section === section);
+const shown = () => (flip ? flip.next : current); // slide yang sedang/akan tampil
 
 // ---------- Geometri lipatan ----------
 
@@ -73,9 +81,10 @@ function draw(page) {
     return;
   }
 
-  // C = sudut kanan bawah kertas, P = posisinya sekarang (melengkung naik di tengah lipatan)
-  const C = { x: w, y: h };
-  const P = constrain({ x: w - 2 * w * prog, y: h - Math.sin(prog * Math.PI) * LIFT * h }, C, h);
+  // C = sudut kertas yang ditarik, P = posisinya sekarang (melengkung naik di tengah lipatan)
+  const C = { x: w, y: page.corner * h };
+  const lift = Math.sin(prog * Math.PI) * LIFT * h * (page.corner ? -1 : 1);
+  const P = constrain({ x: w - 2 * w * prog, y: C.y + lift + page.dy }, C, h);
   const len = Math.hypot(C.x - P.x, C.y - P.y) || 1;
   const n = { x: (C.x - P.x) / len, y: (C.y - P.y) / len }; // normal lipatan, menunjuk ke arah sudut
   const M = { x: (C.x + P.x) / 2, y: (C.y + P.y) / 2 };     // titik di garis lipatan
@@ -100,7 +109,7 @@ function draw(page) {
     [depth, "rgba(0,0,0,.15)"],
   ]);
 
-  // Bayangan jatuh di halaman tujuan di bawahnya, paling tebal saat kertas tegak
+  // Bayangan jatuh di halaman di bawahnya, paling tebal saat kertas tegak
   shadow.style.clipPath = toPolygon(folded);
   shadow.style.backgroundImage = foldGradient(M, n, w, h, [
     [0, `rgba(0,0,0,${(0.15 + 0.4 * curve).toFixed(2)})`],
@@ -108,75 +117,170 @@ function draw(page) {
   ]);
 }
 
-// ---------- Ganti halaman ----------
+// ---------- Lipatan ----------
 
-// Pelan di awal dan akhir, seperti lembar kertas yang diangkat lalu jatuh
-const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2); // seperti kertas diangkat lalu jatuh
+const easeOut = (t) => 1 - Math.pow(1 - t, 3); // setelah dilepas jari: lanjut dengan momentum
 
-// Halaman lama dikembalikan rata lalu disembunyikan di bawah
-function finishFlip() {
-  if (!flipping) return;
-  cancelAnimationFrame(flipping.raf);
-  const old = flipping.page;
-  old.prog = 0;
-  draw(old);
-  old.classList.add("hidden");
-  flipping = null;
-  intro.dataset.section = current.dataset.section; // warna logo ikut setelah kertas selesai dilipat
+// Hanya dua halaman yang terlihat selama lipatan: yang dilipat (atas) dan yang terbuka di bawahnya
+function layer(top, bottom) {
+  pages.forEach((p) => p.classList.toggle("hidden", p !== top && p !== bottom));
+  top.style.zIndex = 2;
+  bottom.style.zIndex = 1;
 }
 
-function show(section) {
-  const target = pages.find((p) => p.dataset.section === section);
-  if (!target || target === current) return;
-  finishFlip(); // klik cepat: selesaikan lipatan sebelumnya dulu
-
-  const old = current;
-  current = target;
-  swapPanel(old.dataset.section, section);
-
-  // Halaman tujuan langsung di bawah halaman lama, lalu halaman lama dilipat
-  target.classList.remove("hidden");
-  target.style.zIndex = 1;
-  old.style.zIndex = 2;
-  pages.forEach((p) => (p.inert = p !== current));
-
-  flipping = { page: old };
-  if (reduceMotion) return finishFlip();
-  const start = performance.now();
+// Lipat `moving` sampai prog = `to`; setelah selesai yang tampil adalah `next`
+function startFlip(moving, under, to, next, fromDrag = false) {
+  const from = moving.prog, fromDy = moving.dy;
+  const duration = reduceMotion ? 0 : Math.max(250, FLIP_MS * Math.abs(to - from));
+  const ease = fromDrag ? easeOut : easeInOut;
+  if (!fromDrag) moving.corner = 1;
+  flip = { moving, under, next };
+  const begin = performance.now();
   const step = (now) => {
-    const t = Math.min((now - start) / FLIP_MS, 1);
-    old.prog = easeInOut(t);
-    draw(old);
-    if (t < 1) flipping.raf = requestAnimationFrame(step);
+    const t = duration ? Math.min((now - begin) / duration, 1) : 1;
+    moving.prog = from + (to - from) * ease(t);
+    moving.dy = fromDy * (1 - ease(t));
+    draw(moving);
+    if (t < 1) flip.raf = requestAnimationFrame(step);
     else finishFlip();
   };
-  flipping.raf = requestAnimationFrame(step);
+  flip.raf = requestAnimationFrame(step);
+  updateUI();
 }
 
-addEventListener("resize", () => flipping && draw(flipping.page));
-
-// ---------- Zoom: bagian besar memenuhi layar, klik lagi (atau Esc) untuk kembali ----------
-
-const slide = document.querySelector(".slide");
-const zoomBtn = document.querySelector(".zoom-toggle");
-const panelsEl = document.querySelector(".panels");
-
-function setZoom(on) {
-  slide.classList.toggle("zoomed", on);
-  zoomBtn.setAttribute("aria-pressed", on);
-  zoomBtn.setAttribute("aria-label", on ? "Kembali ke tampilan awal" : "Perbesar tampilan");
-  panelsEl.inert = on;
+// Selesaikan lipatan (juga dipakai saat diklik cepat): halaman kembali rata, hanya `next` yang terlihat
+function finishFlip() {
+  if (!flip) return;
+  cancelAnimationFrame(flip.raf);
+  const { moving, under, next } = flip;
+  flip = null;
+  moving.prog = moving.dy = 0;
+  draw(moving);
+  [moving, under].forEach((p) => p.classList.toggle("hidden", p !== next));
+  next.style.zIndex = 1;
+  current = next;
+  updateUI();
 }
-zoomBtn.addEventListener("click", () => setZoom(!slide.classList.contains("zoomed")));
-document.addEventListener("keydown", (e) => e.key === "Escape" && setZoom(false));
 
-// ---------- Panel kanan: bertukar tempat dengan halaman besar ----------
+// Tampilkan slide `target`: maju = slide sekarang dilipat; mundur = slide tujuan turun menutupi
+function go(target) {
+  finishFlip();
+  if (!target || target === current) return;
+  const list = sectionPages(current.dataset.section);
+  if (list.indexOf(target) !== -1 && list.indexOf(target) < list.indexOf(current)) {
+    layer(target, current);
+    target.prog = 1;
+    draw(target);
+    startFlip(target, current, 0, target);
+  } else {
+    if (target.dataset.section !== current.dataset.section) swapPanel(current.dataset.section, target.dataset.section);
+    layer(current, target);
+    startFlip(current, target, 1, target);
+  }
+}
+
+const stepBy = (delta) => {
+  const list = sectionPages(shown().dataset.section);
+  go(list[list.indexOf(shown()) + delta]);
+};
+
+// ---------- Navigasi slide di dalam bagian ----------
+
+let navSection = null;
+
+function updateUI() {
+  const page = shown();
+  const list = sectionPages(page.dataset.section);
+  if (navSection !== page.dataset.section) {
+    navSection = page.dataset.section;
+    dots.replaceChildren(
+      ...list.map((p, i) => {
+        const dot = document.createElement("button");
+        dot.setAttribute("aria-label", `Slide ${i + 1}`);
+        dot.addEventListener("click", () => go(p));
+        return dot;
+      })
+    );
+  }
+  const i = list.indexOf(page);
+  nav.hidden = list.length < 2;
+  book.classList.toggle("swipeable", list.length > 1);
+  [...dots.children].forEach((d, j) => d.setAttribute("aria-current", j === i));
+  prevBtn.disabled = i === 0;
+  nextBtn.disabled = i === list.length - 1;
+  pages.forEach((p) => (p.inert = p !== page));
+  if (!flip) intro.dataset.section = current.dataset.section; // warna logo & navigasi ikut setelah lipatan selesai
+}
+
+prevBtn.addEventListener("click", () => stepBy(-1));
+nextBtn.addEventListener("click", () => stepBy(1));
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight") stepBy(1);
+  if (e.key === "ArrowLeft") stepBy(-1);
+});
+addEventListener("resize", () => flip && draw(flip.moving));
+
+// ---------- Geser: sudut kertas mengikuti jari ----------
+
+let drag = null; // { x, y, dx, t0, dir, moving, under, target }
+let lastDx = 0;  // jarak geser terakhir, untuk membedakan geser dari klik
+
+book.addEventListener("pointerdown", (e) => {
+  if (e.button !== 0 || !book.classList.contains("swipeable")) return;
+  drag = { x: e.clientX, y: e.clientY, dx: 0, t0: performance.now(), dir: 0 };
+});
+
+book.addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  drag.dx = e.clientX - drag.x;
+  if (!drag.dir) {
+    if (Math.abs(drag.dx) < 8) return;
+    finishFlip();
+    const list = sectionPages(current.dataset.section);
+    const dir = Math.sign(drag.dx); // -1 = ke slide berikutnya, 1 = ke slide sebelumnya
+    const target = list[list.indexOf(current) - dir];
+    if (!target) { drag = null; return; } // sudah di ujung bagian: tidak nyambung ke bagian lain
+    Object.assign(drag, dir < 0
+      ? { dir, moving: current, under: target, target }
+      : { dir, moving: target, under: current, target });
+    layer(drag.moving, drag.under);
+    const r = book.getBoundingClientRect();
+    drag.moving.corner = drag.y - r.top < r.height / 2 ? 0 : 1; // pegang dekat atas = sudut atas
+    book.classList.add("dragging");
+    book.setPointerCapture(e.pointerId);
+  }
+  const progress = Math.max(0, Math.min((drag.dx * drag.dir) / book.clientWidth, 1));
+  drag.moving.prog = drag.dir < 0 ? progress : 1 - progress;
+  drag.moving.dy = e.clientY - drag.y;
+  draw(drag.moving);
+});
+
+function endDrag() {
+  if (drag?.dir) {
+    book.classList.remove("dragging");
+    const dist = drag.dx * drag.dir;
+    const commit = dist > book.clientWidth * 0.25 || (dist > 40 && dist / (performance.now() - drag.t0) > 0.5);
+    const { dir, moving, under, target } = drag;
+    // Lanjutkan dari posisi jari sampai selesai, atau kembali kalau geserannya kurang
+    if (dir < 0) startFlip(moving, under, commit ? 1 : 0, commit ? target : current, true);
+    else startFlip(moving, under, commit ? 0 : 1, commit ? target : current, true);
+  }
+  lastDx = drag?.dx ?? 0;
+  drag = null;
+}
+book.addEventListener("pointerup", endDrag);
+book.addEventListener("pointercancel", endDrag);
+// Jangan ikuti link kalau pengguna baru saja menggeser
+book.addEventListener("click", (e) => { if (Math.abs(lastDx) >= 8) e.preventDefault(); }, true);
+
+// ---------- Panel kanan: bertukar tempat dengan bagian yang tampil besar ----------
 
 function fillSlot(slot, section, animateIn) {
   const panel = document.getElementById(`panel-${section}`).content.firstElementChild.cloneNode(true);
   panel.dataset.section = section;
   slot.dataset.section = section;
-  panel.querySelector(".panel-open").addEventListener("click", () => show(section));
+  panel.querySelector(".panel-open").addEventListener("click", () => go(sectionPages(section)[0]));
   if (animateIn && !reduceMotion) {
     // Panel baru menyapu masuk di atas panel lama, lalu panel lama dibuang
     const old = [...slot.children];
@@ -195,3 +299,20 @@ function swapPanel(fromSection, toSection) {
 }
 
 slots.forEach((slot) => fillSlot(slot, slot.dataset.section, false));
+
+// ---------- Zoom: bagian besar memenuhi layar, klik lagi (atau Esc) untuk kembali ----------
+
+const slide = document.querySelector(".slide");
+const zoomBtn = document.querySelector(".zoom-toggle");
+const panelsEl = document.querySelector(".panels");
+
+function setZoom(on) {
+  slide.classList.toggle("zoomed", on);
+  zoomBtn.setAttribute("aria-pressed", on);
+  zoomBtn.setAttribute("aria-label", on ? "Kembali ke tampilan awal" : "Perbesar tampilan");
+  panelsEl.inert = on;
+}
+zoomBtn.addEventListener("click", () => setZoom(!slide.classList.contains("zoomed")));
+document.addEventListener("keydown", (e) => e.key === "Escape" && setZoom(false));
+
+updateUI();
