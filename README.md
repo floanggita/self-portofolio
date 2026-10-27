@@ -1,6 +1,6 @@
 # Portofolio
 
-Web portofolio statis (HTML, CSS, JavaScript).
+Web portofolio satu layar (seperti slide presentasi), responsif untuk handphone. HTML + CSS saja.
 
 ## Menjalankan
 - Buka folder ini di VS Code, install ekstensi **Live Server**, lalu klik kanan `index.html` → *Open with Live Server*.
@@ -10,6 +10,5 @@ Web portofolio statis (HTML, CSS, JavaScript).
 ```
 index.html
 assets/css/style.css
-assets/js/main.js
-assets/img/        # taruh foto & gambar proyek di sini
+assets/img/        # taruh foto di sini
 ```
